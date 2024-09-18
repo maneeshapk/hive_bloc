@@ -1,63 +1,49 @@
-import 'package:bloc/bloc.dart';
-import 'package:hive_bloc/src/domain/functions/hive_functions.dart';
+
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_bloc/src/presentation/cubit/bloc/hive_event.dart';
 import 'package:hive_bloc/src/presentation/cubit/bloc/hive_state.dart';
-
+import 'package:hive_bloc/src/domain/functions/hive_functions.dart';
 
 class StudentBloc extends Bloc<StudentEvent, StudentState> {
-  StudentBloc() : super(StudentInitialState()) {
-    on<LoadStudentsEvent>(_onLoadStudents);
-    on<AddStudentEvent>(_onAddStudent);
-    on<UpdateStudentEvent>(_onUpdateStudent);
-    on<DeleteStudentEvent>(_onDeleteStudent);
-  }
+  StudentBloc() : super(StudentLoadingState()) {
+    on<LoadStudentsEvent>((event, emit) async {
+      try {
+        final students = await getstudentinfo(); // Fetch students from Hive
+        emit(StudentLoadedState(students.toList()));
+      } catch (error) {
+        emit(StudentErrorState(error.toString()));
+      }
+    });
 
-  Future<void> _onLoadStudents(
-    LoadStudentsEvent event,
-    Emitter<StudentState> emit,
-  ) async {
-    emit(StudentLoadingState());
-    try {
-      final students = await getstudentinfo();
-      emit(StudentLoadedState(students.toList()));
-    } catch (e) {
-      emit(StudentErrorState('Failed to load students'));
-    }
-  }
+    on<AddStudentEvent>((event, emit) async {
+      try {
+        await addstudentinfo(event.student); // Add student to Hive
+        final students = await getstudentinfo(); // Fetch updated students
+        emit(StudentLoadedState(students.toList()));
+      } catch (error) {
+        emit(StudentErrorState(error.toString()));
+      }
+    });
 
-  Future<void> _onAddStudent(
-    AddStudentEvent event,
-    Emitter<StudentState> emit,
-  ) async {
-    try {
-      await addstudentinfo(event.student);
-      add(LoadStudentsEvent()); // Reload students after adding
-    } catch (e) {
-      emit(StudentErrorState('Failed to add student'));
-    }
-  }
+    on<UpdateStudentEvent>((event, emit) async {
+      try {
+        await updatestudentinfo(event.student); // Update student in Hive
+        final students = await getstudentinfo(); // Fetch updated students
+        emit(StudentLoadedState(students.toList()));
+      } catch (error) {
+        emit(StudentErrorState(error.toString()));
+      }
+    });
 
-  Future<void> _onUpdateStudent(
-    UpdateStudentEvent event,
-    Emitter<StudentState> emit,
-  ) async {
-    try {
-      await updatestudentinfo(event.student);
-      add(LoadStudentsEvent()); // Reload students after updating
-    } catch (e) {
-      emit(StudentErrorState('Failed to update student'));
-    }
-  }
-
-  Future<void> _onDeleteStudent(
-    DeleteStudentEvent event,
-    Emitter<StudentState> emit,
-  ) async {
-    try {
-      await deletestudentinfo(event.studentId);
-      add(LoadStudentsEvent()); // Reload students after deletion
-    } catch (e) {
-      emit(StudentErrorState('Failed to delete student'));
-    }
+    on<DeleteStudentEvent>((event, emit) async {
+      try {
+        await deletestudentinfo(event.studentId); // Delete student from Hive
+        final students = await getstudentinfo(); // Fetch updated students
+        emit(StudentLoadedState(students.toList()));
+      } catch (error) {
+        emit(StudentErrorState(error.toString()));
+      }
+    });
   }
 }
+

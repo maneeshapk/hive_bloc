@@ -1,3 +1,4 @@
+
 import 'package:equatable/equatable.dart';
 import 'package:hive_bloc/src/domain/models/hivemodel.dart';
 
@@ -12,6 +13,7 @@ class LoadStudentsEvent extends StudentEvent {}
 
 class AddStudentEvent extends StudentEvent {
   final HiveModel student;
+
   const AddStudentEvent(this.student);
 
   @override
@@ -20,6 +22,7 @@ class AddStudentEvent extends StudentEvent {
 
 class UpdateStudentEvent extends StudentEvent {
   final HiveModel student;
+
   const UpdateStudentEvent(this.student);
 
   @override
@@ -28,6 +31,7 @@ class UpdateStudentEvent extends StudentEvent {
 
 class DeleteStudentEvent extends StudentEvent {
   final int studentId;
+
   const DeleteStudentEvent(this.studentId);
 
   @override
